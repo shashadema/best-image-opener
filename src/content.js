@@ -463,7 +463,18 @@
     // perfectly healthy page image.  When the proxy is not ready yet, the
     // page's own image keeps the native menu clean and the extension's own
     // menu still has the resolved URL.
-    if (!loader || !loader.loaded || loader.failed || !loader.img.complete) return;
+    // Huaban's homepage deliberately serves a small `fw192webp` preview and
+    // its raw PNG endpoint can be several MB.  On the first right-click the
+    // preview may not have finished preloading yet; attach the already-resolved
+    // PNG URL immediately so Chrome does not fall back to the page's WebP.
+    const allowHuabanFirstClick = resolved.rule === 'huaban';
+    if (
+      !loader ||
+      loader.failed ||
+      (!allowHuabanFirstClick && (!loader.loaded || !loader.img.complete))
+    ) {
+      return;
+    }
 
     const rect = hit.el.getBoundingClientRect();
     if (!rect || rect.width < 2 || rect.height < 2) return;

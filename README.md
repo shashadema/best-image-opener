@@ -16,7 +16,7 @@ Chrome 不允许命令行静默安装未上架扩展，最后一步必须由你�
 4. 选择本目录 `best-image-opener`（里面直接有 `manifest.json`）
 5. 建议把工具栏上的「原图助手」图标固定出来
 
-也可以解压分享包 `原图助手-1.0.6.zip` 后选择解压出来的文件夹。
+也可以解压分享包 `原图助手-1.0.7.zip` 后选择解压出来的文件夹。
 
 安装后打开 `demo/index.html`（或起一个本地服务器）逐张右键测试。直接双击 `file://` 打开时，需要在扩展详情里打开 **允许访问文件网址**。
 
@@ -80,7 +80,7 @@ Chrome 不允许命令行静默安装未上架扩展，最后一步必须由你�
 | Medium | `resize:fit:1200` → `resize:fit:4000` |
 | Substack | 拆开 `image/fetch/.../https%3A%2F%2F...` 嵌套地址 |
 | ArtStation | `smaller_square` / `micro_square` → `large` |
-| 花瓣网 | `_fw192webp` / `_fw480webp` / `_fw658` 等尺寸后缀 → 去掉后缀取原始上传 |
+| 花瓣网 | 新版 `gd-hbimg.huaban.com/..._fw192webp` / `_fw480webp` 等尺寸后缀 → 去掉后缀取 PNG 原图；首次右键也优先接管该原图 |
 | 通用 | WordPress `-300x200`、`x-oss-process`、`imageView2` 等缩放参数 |
 
 签名地址（Instagram、Facebook、抖音等）不会乱改：地址与签名绑定，改一个字符就 403，扩展会保留原地址。

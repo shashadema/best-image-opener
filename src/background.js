@@ -172,6 +172,7 @@ const pendingOpens = new Map(); // tabId -> { list, index, referer, startedAt }
 function needsRasterConversion(url) {
   return /(?:\.webp|\.avif)(?:[?#]|$)/i.test(url) ||
     /[?&](?:format|fm|image_format)=(?:webp|avif)\b/i.test(url) ||
+    /(?:fw|sq|ht|hw|thumb)\d*(?:webp|avif)(?:[!/_?-]|$)/i.test(url) ||
     /(?:^|[!/_-])(?:webp|avif)(?:[!/_?-]|$)/i.test(url);
 }
 
