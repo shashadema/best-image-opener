@@ -16,7 +16,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const VERSION = '1.0.5';
+  const VERSION = '1.0.6';
 
   const DEFAULT_SETTINGS = {
     enabled: true,

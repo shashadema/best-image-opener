@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "原图助手 · Best Image Opener",
   "short_name": "原图助手",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "右键在新标签页打开图片时自动换成最高画质原图；支持懒加载、srcset、背景图，并解除常见的右键限制。",
   "minimum_chrome_version": "116",
   "permissions": [

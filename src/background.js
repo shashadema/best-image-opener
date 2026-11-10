@@ -18,6 +18,7 @@ const MENU_DOWNLOAD = 'best-image-download';
 let settingsCache = null;
 let contextByFrame = new Map(); // "tabId:frameId" -> context, short lived
 let offscreenPromise = null;
+let imageConversionPromise = null;
 
 function loadSettings() {
   if (!settingsCache) {
@@ -168,6 +169,41 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
 
 const pendingOpens = new Map(); // tabId -> { list, index, referer, startedAt }
 
+function needsRasterConversion(url) {
+  return /(?:\.webp|\.avif)(?:[?#]|$)/i.test(url) ||
+    /[?&](?:format|fm|image_format)=(?:webp|avif)\b/i.test(url) ||
+    /(?:^|[!/_-])(?:webp|avif)(?:[!/_?-]|$)/i.test(url);
+}
+
+async function convertToPng(url, referer) {
+  if (!needsRasterConversion(url)) return null;
+  await ensureOffscreen();
+  if (imageConversionPromise) return imageConversionPromise;
+  imageConversionPromise = chrome.runtime.sendMessage({
+    target: 'best-image-offscreen',
+    type: 'convert-image',
+    url,
+    referer,
+  }).finally(() => {
+    imageConversionPromise = null;
+  });
+  const result = await imageConversionPromise;
+  if (!result || !result.ok || !result.dataUrl) {
+    console.warn('[BestImage] image format conversion failed:', result && result.error);
+    return null;
+  }
+  return result;
+}
+
+async function prepareImageAsset(target, referer) {
+  const converted = await convertToPng(target, referer).catch((error) => {
+    console.warn('[BestImage] image format conversion failed:', error);
+    return null;
+  });
+  if (!converted) return { url: target, extension: null, converted: false };
+  return { url: converted.dataUrl, extension: converted.extension || 'png', converted: true };
+}
+
 async function openOriginal(target, tab, context) {
   const settings = await loadSettings();
   const referer =
@@ -176,8 +212,31 @@ async function openOriginal(target, tab, context) {
     '';
   const policy = (context && context.referrerPolicy) || '';
   const useReferer = !!(settings.referer && !/no-referrer/i.test(policy) && /^https?:/i.test(referer));
+  const asset = await prepareImageAsset(target, referer);
+  const openTarget = asset.url;
 
-  const list = [target];
+  const list = [openTarget];
+  if (asset.converted) {
+    const createOptions = {
+      url: 'about:blank',
+      active: !settings.openInBackground,
+    };
+    if (tab && tab.id != null) createOptions.openerTabId = tab.id;
+    if (tab && typeof tab.index === 'number') createOptions.index = tab.index + 1;
+    const created = await chrome.tabs.create(createOptions);
+    if (!created || created.id == null) {
+      return chrome.tabs.create({ url: openTarget, active: !settings.openInBackground });
+    }
+    pendingOpens.set(created.id, {
+      list,
+      index: 0,
+      referer: '',
+      startedAt: Date.now(),
+    });
+    await chrome.tabs.update(created.id, { url: openTarget }).catch(() => {});
+    return created;
+  }
+
   const extra = context && Array.isArray(context.candidates) ? context.candidates : [];
   for (const url of extra) {
     if (list.length >= 4) break;
@@ -269,7 +328,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     });
 });
 
-function filenameFor(url) {
+function filenameFor(url, forcedExtension) {
   try {
     const u = new URL(url);
     let base = decodeURIComponent((u.pathname.split('/').pop() || '').replace(/\+/g, ' '));
@@ -277,7 +336,10 @@ function filenameFor(url) {
     if (!base || /^\d{1,4}$/.test(base)) {
       base = base ? 'image-' + base : 'image';
     }
-    if (!/\.[a-z0-9]{2,5}$/i.test(base)) {
+    if (forcedExtension) {
+      base = base.replace(/\.[a-z0-9]{2,5}$/i, '');
+      base = (base || 'image') + '.' + forcedExtension;
+    } else if (!/\.[a-z0-9]{2,5}$/i.test(base)) {
       let ext = u.searchParams.get('wx_fmt') || u.searchParams.get('format') || '';
       const pathQuery = u.search.match(/format\/(png|jpe?g|webp|gif|avif)/i);
       if (!ext && pathQuery) ext = pathQuery[1];
@@ -291,11 +353,16 @@ function filenameFor(url) {
   }
 }
 
-async function downloadOriginal(url, tab) {
+async function downloadOriginal(url, tab, context) {
   try {
+    const referer =
+      (context && context.pageUrl) ||
+      (tab && tab.url) ||
+      '';
+    const asset = await prepareImageAsset(url, referer);
     await chrome.downloads.download({
-      url,
-      filename: filenameFor(url),
+      url: asset.url,
+      filename: filenameFor(asset.url, asset.extension),
       conflictAction: 'uniquify',
       saveAs: false,
     });
@@ -446,6 +513,6 @@ async function handleMenuClick(info, tab) {
     return;
   }
   if (info.menuItemId === MENU_DOWNLOAD) {
-    await downloadOriginal(target, tab);
+    await downloadOriginal(target, tab, context);
   }
 }
