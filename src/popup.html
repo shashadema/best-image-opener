@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>原图助手</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #111827;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --card: #f9fafb;
+        --brand: #2563eb;
+        --brand-weak: #dbeafe;
+        --ok: #059669;
+        --danger: #dc2626;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #111318;
+          --fg: #f3f4f6;
+          --muted: #9ca3af;
+          --line: #2a2e37;
+          --card: #171a21;
+          --brand: #60a5fa;
+          --brand-weak: #1e3a8a;
+          --ok: #34d399;
+          --danger: #f87171;
+        }
+      }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body {
+        margin: 0;
+        width: 352px;
+        background: var(--bg);
+        color: var(--fg);
+        font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+          "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px 12px;
+      }
+      header img { width: 34px; height: 34px; border-radius: 9px; }
+      .titles { flex: 1; min-width: 0; }
+      .titles h1 { margin: 0; font-size: 15px; font-weight: 650; letter-spacing: .2px; }
+      .titles p { margin: 1px 0 0; color: var(--muted); font-size: 11px; }
+      .version { color: var(--muted); font-size: 10px; }
+      main { padding: 0 16px 12px; }
+      .master {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        background: var(--card);
+        border-radius: 12px;
+      }
+      .master strong { font-size: 13px; }
+      .master small { display: block; color: var(--muted); font-size: 11px; margin-top: 2px; }
+      .site {
+        margin-top: 12px;
+        padding: 12px 14px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+      }
+      .site-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); flex: none; }
+      .dot.off { background: var(--danger); }
+      .host { font-weight: 600; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .site-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+      .site-row span { color: var(--muted); font-size: 11.5px; }
+      .quick { margin-top: 12px; border-top: 1px solid var(--line); }
+      .quick label {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 2px;
+        border-bottom: 1px solid var(--line);
+        cursor: pointer;
+      }
+      .quick label:last-child { border-bottom: 0; }
+      .quick b { display: block; font-weight: 550; font-size: 12px; }
+      .quick small { display: block; color: var(--muted); font-size: 10.5px; margin-top: 1px; }
+      .switch {
+        appearance: none;
+        width: 36px;
+        height: 21px;
+        border-radius: 999px;
+        background: #d1d5db;
+        position: relative;
+        cursor: pointer;
+        flex: none;
+        transition: background .16s ease;
+        margin: 0;
+      }
+      .switch::after {
+        content: "";
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 17px;
+        height: 17px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+        transition: transform .16s ease;
+      }
+      .switch:checked { background: var(--brand); }
+      .switch:checked::after { transform: translateX(15px); }
+      .switch:disabled { opacity: .4; cursor: default; }
+      footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px 14px;
+        border-top: 1px solid var(--line);
+      }
+      footer .hint { color: var(--muted); font-size: 10.5px; }
+      button.link {
+        border: 0;
+        background: transparent;
+        color: var(--brand);
+        font: inherit;
+        font-size: 12px;
+        cursor: pointer;
+        padding: 4px 2px;
+      }
+      button.link:hover { text-decoration: underline; }
+      .unavailable { color: var(--muted); font-size: 11.5px; }
+      .banner {
+        display: none;
+        margin-top: 10px;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: var(--brand-weak);
+        color: var(--brand);
+        font-size: 11px;
+      }
+      .banner.show { display: block; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <img src="../icons/icon128.png" alt="" />
+      <div class="titles">
+        <h1>原图助手</h1>
+        <p>右键图片 → 原图 / 最高画质</p>
+      </div>
+      <span class="version">v1.0.5</span>
+    </header>
+
+    <main>
+      <div class="master">
+        <div>
+          <strong>启用扩展</strong>
+          <small>关闭后所有网站都恢复原始行为</small>
+        </div>
+        <input class="switch" id="enabled" type="checkbox" />
+      </div>
+
+      <div class="site">
+        <div class="site-head">
+          <span class="dot" id="siteDot"></span>
+          <span class="host" id="siteHost">读取中…</span>
+        </div>
+        <div class="site-row" id="siteRow" hidden>
+          <span id="siteState">在此网站启用</span>
+          <input class="switch" id="siteToggle" type="checkbox" />
+        </div>
+        <div class="unavailable" id="siteUnavailable" hidden>此页面不支持（chrome:// 等内部页面）</div>
+      </div>
+
+      <div class="quick">
+        <label>
+          <span>
+            <b>接管浏览器图片菜单</b>
+            <small>原图加载成功后再让 Chrome 自带菜单使用原图</small>
+          </span>
+          <input class="switch" type="checkbox" data-key="proxy" />
+        </label>
+        <label>
+          <span>
+            <b>解除右键限制</b>
+            <small>按住 Alt 右键可临时绕过</small>
+          </span>
+          <input class="switch" type="checkbox" data-key="unblock" />
+        </label>
+        <label>
+          <span>
+            <b>防盗链 Referer</b>
+            <small>新标签页请求时带上原页面 Referer</small>
+          </span>
+          <input class="switch" type="checkbox" data-key="referer" />
+        </label>
+      </div>
+
+      <div class="banner" id="banner"></div>
+    </main>
+
+    <footer>
+      <span class="hint">Alt + 右键 = 使用网站原菜单</span>
+      <button class="link" id="options">全部设置 →</button>
+    </footer>
+
+    <script src="resolver.js"></script>
+    <script src="popup.js"></script>
+  </body>
+</html>

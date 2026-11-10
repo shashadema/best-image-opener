@@ -1,0 +1,7 @@
+# Local distribution archives are kept outside the source repository.
+原图助手-*.zip
+
+# Local editor / OS files.
+.DS_Store
+Thumbs.db
+*.swp
